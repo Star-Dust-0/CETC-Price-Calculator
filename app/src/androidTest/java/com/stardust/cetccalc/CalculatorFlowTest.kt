@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 import android.content.ContentValues
 import android.provider.MediaStore
 import java.io.File
+import java.io.FileOutputStream
 
 @RunWith(AndroidJUnit4::class)
 class CalculatorFlowTest {
