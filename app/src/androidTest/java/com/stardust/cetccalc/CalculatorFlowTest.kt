@@ -44,6 +44,7 @@ class CalculatorFlowTest {
             runCatching { composeRule.onNodeWithTag("totalValue").assertTextEquals(expected); true }.getOrDefault(false)
         }
         android.util.Log.i("CETCTax", "after click: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
+        android.util.Log.i("CETCTax", "total now: " + composeRule.onNodeWithTag("totalValue").fetchSemanticsNode().config.toString())
         composeRule.onNodeWithTag("totalValue").assertTextEquals(expected)
     }
 
