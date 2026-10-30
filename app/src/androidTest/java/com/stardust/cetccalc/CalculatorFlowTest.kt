@@ -1,24 +1,19 @@
 package com.stardust.cetccalc
 
-import android.graphics.Bitmap
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.isRoot
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import org.junit.Assert.assertTrue
+import androidx.test.uiautomator.UiDevice
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
-import java.io.FileOutputStream
 
 @RunWith(AndroidJUnit4::class)
 class CalculatorFlowTest {
@@ -30,26 +25,25 @@ class CalculatorFlowTest {
 
     private fun screenshot(name: String) {
         composeRule.waitForIdle()
-        val image = composeRule.onAllNodes(isRoot()).onFirst().captureToImage()
-        val pixels = IntArray(image.width * image.height)
-        image.readPixels(pixels)
-        val bitmap = Bitmap.createBitmap(pixels, image.width, image.height, Bitmap.Config.ARGB_8888)
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val dir = InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null)!!
         val file = File(dir, "${"%02d".format(shotIndex++)}_$name.png")
-        FileOutputStream(file).use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out) }
+        device.takeScreenshot(file)
+    }
+
+    private fun waitForPicker() {
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            runCatching { composeRule.onNodeWithTag("testPicker").assertIsDisplayed(); true }.getOrDefault(false)
+        }
     }
 
     @Test
     fun fullCalculatorFlowMatchesMockupMath() {
-        // Wait for seed import + UI
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            runCatching { composeRule.onNodeWithTag("testPicker").assertIsDisplayed(); true }.getOrDefault(false)
-        }
+        waitForPicker()
         screenshot("home_empty")
 
         // Open picker and choose بروكتور رمل
         composeRule.onNodeWithTag("testPicker").performClick()
-        composeRule.waitForIdle()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching { composeRule.onNodeWithText("بروكتور رمل").assertIsDisplayed(); true }.getOrDefault(false)
         }
@@ -57,28 +51,31 @@ class CalculatorFlowTest {
         composeRule.onNodeWithText("بروكتور رمل").performClick()
         composeRule.waitForIdle()
 
-        // Unit price ١٬٢٥٠ ج.م shown
-        composeRule.onNodeWithText("١٬٢٥٠ ج.م").assertIsDisplayed()
+        // Unit price shown in the pricing card
+        composeRule.onNodeWithTag("unitPriceValue").assertTextEquals("١٬٢٥٠ ج.م")
         screenshot("selected_default_qty")
 
         // Quantity 3 -> cost ٣٬٧٥٠, tax ٥٢٥, total ٤٬٢٧٥
         composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("٣٬٧٥٠ ج.م").assertIsDisplayed()
-        composeRule.onNodeWithText("٥٢٥ ج.م").assertIsDisplayed()
-        composeRule.onNodeWithText("٤٬٢٧٥ ج.م").assertIsDisplayed()
+        composeRule.onNodeWithTag("costValue").assertTextEquals("٣٬٧٥٠ ج.م")
+        composeRule.onNodeWithTag("taxValue").assertTextEquals("٥٢٥ ج.م")
+        composeRule.onNodeWithTag("totalValue").assertTextEquals("٤٬٢٧٥ ج.م")
         screenshot("qty3_with_tax")
 
-        // Tax off -> total ٣٬٧٥٠
+        // Tax off -> total equals cost
         composeRule.onNodeWithTag("taxSwitch").performClick()
         composeRule.waitForIdle()
-        val totals = composeRule.onAllNodes(hasText("٣٬٧٥٠ ج.م"))
-        assertTrue("cost and total should both show ٣٬٧٥٠", totals.fetchSemanticsNodes().size >= 2)
+        composeRule.onNodeWithTag("totalValue").assertTextEquals("٣٬٧٥٠ ج.م")
         screenshot("qty3_no_tax")
-
-        // Below-minimum warning: مطرقة ارتداد min 30, qty 5
-        composeRule.onNodeWithTag("testPicker").performClick()
+        composeRule.onNodeWithTag("taxSwitch").performClick()
         composeRule.waitForIdle()
+
+        // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
+        composeRule.onNodeWithTag("testPicker").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithText("مطرقة ارتداد").assertIsDisplayed(); true }.getOrDefault(false)
+        }
         composeRule.onNodeWithText("مطرقة ارتداد").performClick()
         composeRule.onNodeWithTag("qtyField").performTextReplacement("5")
         composeRule.waitForIdle()
@@ -88,16 +85,14 @@ class CalculatorFlowTest {
 
     @Test
     fun databaseAndAboutScreens() {
-        composeRule.waitUntil(timeoutMillis = 15_000) {
-            runCatching { composeRule.onNodeWithTag("testPicker").assertIsDisplayed(); true }.getOrDefault(false)
-        }
+        waitForPicker()
         composeRule.onNodeWithTag("menuButton").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("إدارة قاعدة البيانات").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching { composeRule.onNodeWithTag("dbVersionLabel").assertIsDisplayed(); true }.getOrDefault(false)
         }
-        composeRule.onNodeWithText("إصدار قاعدة البيانات الحالي: 2026").assertIsDisplayed()
+        composeRule.onNodeWithTag("dbVersionLabel").assertTextEquals("إصدار قاعدة البيانات الحالي: 2026")
         screenshot("database_screen")
         composeRule.onNodeWithTag("backButton").performClick()
         composeRule.waitForIdle()
