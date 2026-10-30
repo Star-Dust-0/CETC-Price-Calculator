@@ -79,18 +79,19 @@ jobs:
           profile: Nexus 6
           disable-animations: true
           script: |
+            set +e
             gradle connectedDebugAndroidTest --stacktrace
-            echo '--- CETCShot logcat ---'
-            adb logcat -d -s CETCShot:I || true
-            echo '--- dir diagnostics ---'
-            adb shell 'ls -la /sdcard/Android/data/ | head -30' || true
-            adb shell 'ls -la /sdcard/Android/data/com.stardust.cetccalc/ 2>&1' || true
-            adb shell 'find /sdcard /storage/emulated -name "*home_empty*" 2>/dev/null' || true
+            TEST_EXIT=$?
+            set -e
+            echo "test exit: $TEST_EXIT"
+            echo '--- CETCShot/CETCTax logcat ---'
+            adb logcat -d -s CETCShot:I CETCTax:I || true
             mkdir -p screenshots
             # Android 11+ hides Android/data/<pkg> from adb shell; use run-as (debuggable build) + tar through exec-out
-            adb exec-out "run-as com.stardust.cetccalc tar -cf - -C /sdcard/Android/data/com.stardust.cetccalc/files ." > shots.tar
-            tar -xf shots.tar -C screenshots/
-            find screenshots -type f -name '*.png' | sort
+            adb exec-out "run-as com.stardust.cetccalc tar -cf - -C /sdcard/Android/data/com.stardust.cetccalc/files ." > shots.tar || true
+            tar -xf shots.tar -C screenshots/ || true
+            find screenshots -type f -name '*.png' | sort || true
+            exit $TEST_EXIT
       - if: always()
         uses: actions/upload-artifact@v4
         with:

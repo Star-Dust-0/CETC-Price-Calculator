@@ -38,10 +38,12 @@ class CalculatorFlowTest {
     }
 
     private fun toggleTaxAndAwaitTotal(expected: String) {
+        android.util.Log.i("CETCTax", "before click: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
         composeRule.onNodeWithTag("taxSwitch").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching { composeRule.onNodeWithTag("totalValue").assertTextEquals(expected); true }.getOrDefault(false)
         }
+        android.util.Log.i("CETCTax", "after click: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
         composeRule.onNodeWithTag("totalValue").assertTextEquals(expected)
     }
 
