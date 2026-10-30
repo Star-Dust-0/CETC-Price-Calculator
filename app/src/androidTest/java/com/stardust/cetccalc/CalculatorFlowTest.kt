@@ -82,6 +82,7 @@ class CalculatorFlowTest {
         composeRule.onNodeWithText("مطرقة ارتداد").performClick()
         composeRule.onNodeWithTag("qtyField").performTextReplacement("5")
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasText("الحد الأدنى للكمية", substring = true))
         composeRule.onNodeWithText("الحد الأدنى للكمية: ٣٠ قراءة").assertIsDisplayed()
         screenshot("min_warning")
     }

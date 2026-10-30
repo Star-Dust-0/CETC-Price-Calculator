@@ -100,6 +100,7 @@ fun CalculatorScreen(
             .navigationBarsPadding()
             .imePadding()
             .verticalScroll(rememberScrollState())
+            .testTag("calcScroll")
     ) {
         // Header
         Box(modifier = Modifier.fillMaxWidth()) {
