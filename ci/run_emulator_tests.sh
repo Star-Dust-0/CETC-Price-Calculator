@@ -11,11 +11,10 @@ echo '--- CETCShot/CETCTax logcat ---'
 adb logcat -d -s CETCShot:I CETCTax:I || true
 
 mkdir -p screenshots
-# Android 11+ hides Android/data/<pkg> from adb shell; run-as (debuggable build) sees it
-adb shell "run-as com.stardust.cetccalc ls -la /sdcard/Android/data/com.stardust.cetccalc/files/" || true
-for f in $(adb shell "run-as com.stardust.cetccalc ls /sdcard/Android/data/com.stardust.cetccalc/files/" 2>/dev/null | tr -d '\r'); do
-  adb exec-out "run-as com.stardust.cetccalc cat /sdcard/Android/data/com.stardust.cetccalc/files/$f" > "screenshots/$f" || true
-done
+# Screenshots are mirrored to the public Pictures/CETC-CI collection (visible to adb;
+# the app itself is uninstalled when the test task finishes, so run-as is unavailable)
+adb shell 'ls -la /sdcard/Pictures/CETC-CI/ 2>&1' || true
+adb pull /sdcard/Pictures/CETC-CI/ screenshots/ || true
 find screenshots -type f -name '*.png' | sort || true
 
 exit $TEST_EXIT

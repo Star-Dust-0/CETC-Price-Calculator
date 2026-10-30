@@ -16,6 +16,8 @@ import androidx.test.uiautomator.UiDevice
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import android.content.ContentValues
+import android.provider.MediaStore
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
@@ -30,12 +32,28 @@ class CalculatorFlowTest {
         composeRule.waitForIdle()
         Thread.sleep(500) // let popup/system windows finish drawing before UiDevice capture
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val dir = InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null)!!
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dir = context.getExternalFilesDir(null)!!
         dir.mkdirs()
         val file = File(dir, "${"%02d".format(shotIndex++)}_$name.png")
         val ok = device.takeScreenshot(file)
         android.util.Log.i("CETCShot", "takeScreenshot=$ok path=${file.absolutePath} exists=${file.exists()} len=${if (file.exists()) file.length() else -1}")
         check(ok && file.exists() && file.length() > 0) { "screenshot failed: ${file.absolutePath}" }
+        // Mirror into the public Pictures collection so CI can pull it: the app-private
+        // external dir is invisible to adb, and the app is uninstalled when tests finish.
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, file.name)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CETC-CI")
+        }
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        if (uri != null) {
+            resolver.openOutputStream(uri)?.use { out -> file.inputStream().use { it.copyTo(out) } }
+            android.util.Log.i("CETCShot", "mirrored to $uri")
+        } else {
+            android.util.Log.w("CETCShot", "MediaStore insert returned null for ${file.name}")
+        }
     }
 
     private fun toggleTaxAndAwaitTotal(expected: String) {
