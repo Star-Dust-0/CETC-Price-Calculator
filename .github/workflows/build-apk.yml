@@ -91,7 +91,8 @@ jobs:
             adb exec-out "run-as com.stardust.cetccalc tar -cf - -C /sdcard/Android/data/com.stardust.cetccalc/files ." > shots.tar
             tar -xf shots.tar -C screenshots/
             find screenshots -type f -name '*.png' | sort
-      - uses: actions/upload-artifact@v4
+      - if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: emulator-screenshots
           path: screenshots/**/*.png

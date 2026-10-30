@@ -37,6 +37,14 @@ class CalculatorFlowTest {
         check(ok && file.exists() && file.length() > 0) { "screenshot failed: ${file.absolutePath}" }
     }
 
+    private fun toggleTaxAndAwaitTotal(expected: String) {
+        composeRule.onNodeWithTag("taxSwitch").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("totalValue").assertTextEquals(expected); true }.getOrDefault(false)
+        }
+        composeRule.onNodeWithTag("totalValue").assertTextEquals(expected)
+    }
+
     private fun waitForPicker() {
         composeRule.waitUntil(timeoutMillis = 15_000) {
             runCatching { composeRule.onNodeWithTag("testPicker").assertIsDisplayed(); true }.getOrDefault(false)
@@ -70,12 +78,9 @@ class CalculatorFlowTest {
         screenshot("qty3_with_tax")
 
         // Tax off -> total equals cost
-        composeRule.onNodeWithTag("taxSwitch").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("totalValue").assertTextEquals("٣٬٧٥٠ ج.م")
+        toggleTaxAndAwaitTotal("٣٬٧٥٠ ج.م")
         screenshot("qty3_no_tax")
-        composeRule.onNodeWithTag("taxSwitch").performClick()
-        composeRule.waitForIdle()
+        toggleTaxAndAwaitTotal("٤٬٢٧٥ ج.م")
 
         // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
         composeRule.onNodeWithTag("testPicker").performClick()
