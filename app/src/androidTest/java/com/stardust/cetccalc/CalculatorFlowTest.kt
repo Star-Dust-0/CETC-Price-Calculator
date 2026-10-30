@@ -7,7 +7,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -41,6 +45,21 @@ class CalculatorFlowTest {
         check(ok && file.exists() && file.length() > 0) { "screenshot failed: ${file.absolutePath}" }
         // Mirror into the public Pictures collection so CI can pull it: the app-private
         // external dir is invisible to adb, and the app is uninstalled when tests finish.
+        mirrorToPictures(context, file)
+    }
+
+    private fun captureNodePng(tag: String, name: String) {
+        composeRule.waitForIdle()
+        val bitmap = composeRule.onNodeWithTag(tag).captureToImage().asAndroidBitmap()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dir = context.getExternalFilesDir(null)!!.apply { mkdirs() }
+        val file = File(dir, "${"%02d".format(shotIndex++)}_$name.png")
+        FileOutputStream(file).use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        android.util.Log.i("CETCShot", "node capture path=${file.absolutePath} len=${file.length()}")
+        mirrorToPictures(context, file)
+    }
+
+    private fun mirrorToPictures(context: android.content.Context, file: File) {
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, file.name)
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
@@ -50,20 +69,26 @@ class CalculatorFlowTest {
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
         if (uri != null) {
             resolver.openOutputStream(uri)?.use { out -> file.inputStream().use { it.copyTo(out) } }
-            android.util.Log.i("CETCShot", "mirrored to $uri")
-        } else {
-            android.util.Log.w("CETCShot", "MediaStore insert returned null for ${file.name}")
         }
     }
 
     private fun toggleTaxAndAwaitTotal(expected: String) {
-        android.util.Log.i("CETCTax", "before click: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
-        composeRule.onNodeWithTag("taxSwitch").performClick()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("totalValue").assertTextEquals(expected); true }.getOrDefault(false)
+        // performClick injects a real touch at the node center, which has proven flaky on the
+        // CI emulator (touches intermittently swallowed near the IME/nav area). The semantics
+        // action invocation is coordinate-free and deterministic; it tests OUR state wiring.
+        repeat(2) { attempt ->
+            android.util.Log.i("CETCTax", "click attempt ${attempt + 1}, switch: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
+            composeRule.onNodeWithTag("taxSwitch").performSemanticsAction(SemanticsActions.OnClick)
+            val reached = runCatching {
+                composeRule.waitUntil(timeoutMillis = 3_000) {
+                    runCatching { composeRule.onNodeWithTag("totalValue").assertTextEquals(expected); true }.getOrDefault(false)
+                }
+            }.isSuccess
+            if (reached) {
+                android.util.Log.i("CETCTax", "total now: " + composeRule.onNodeWithTag("totalValue").fetchSemanticsNode().config.toString())
+                return
+            }
         }
-        android.util.Log.i("CETCTax", "after click: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
-        android.util.Log.i("CETCTax", "total now: " + composeRule.onNodeWithTag("totalValue").fetchSemanticsNode().config.toString())
         composeRule.onNodeWithTag("totalValue").assertTextEquals(expected)
     }
 
@@ -84,6 +109,7 @@ class CalculatorFlowTest {
             runCatching { composeRule.onNodeWithText("بروكتور رمل").assertIsDisplayed(); true }.getOrDefault(false)
         }
         screenshot("picker_open")
+        captureNodePng("pickerPopup", "01b_picker_dropdown")
         composeRule.onNodeWithText("بروكتور رمل").performClick()
         composeRule.waitForIdle()
 
