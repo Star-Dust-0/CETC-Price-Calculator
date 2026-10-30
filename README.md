@@ -13,7 +13,19 @@ A simple, polished Android calculator for the unit price list of the Civil Engin
 
 ## Screenshots
 
-<!-- Screenshots from real emulator runs are added here. -->
+Captured automatically from real emulator runs in CI (API 34, Nexus 6 profile) on every push.
+
+| Home | Test picker | Calculation (with VAT) |
+| --- | --- | --- |
+| ![Home](docs/screenshots/01-home.png) | ![Test picker](docs/screenshots/02-test-picker.png) | ![Calculation with VAT](docs/screenshots/03-calculation-with-tax.png) |
+
+| Calculation (no VAT) | Minimum-quantity warning | Database manager |
+| --- | --- | --- |
+| ![Calculation without VAT](docs/screenshots/04-calculation-no-tax.png) | ![Minimum quantity warning](docs/screenshots/05-min-quantity-warning.png) | ![Database manager](docs/screenshots/06-database-manager.png) |
+
+| About |
+| --- |
+| ![About](docs/screenshots/07-about.png) |
 
 ## Price data
 
