@@ -29,8 +29,10 @@ class CalculatorFlowTest {
         composeRule.waitForIdle()
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val dir = InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null)!!
+        dir.mkdirs()
         val file = File(dir, "${"%02d".format(shotIndex++)}_$name.png")
-        device.takeScreenshot(file)
+        val ok = device.takeScreenshot(file)
+        check(ok && file.exists() && file.length() > 0) { "screenshot failed: ${file.absolutePath}" }
     }
 
     private fun waitForPicker() {
