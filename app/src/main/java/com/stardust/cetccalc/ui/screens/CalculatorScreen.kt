@@ -44,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -91,6 +93,7 @@ fun CalculatorScreen(
     val cost = unitPrice * qty
     val tax = if (taxEnabled) cost * 0.14 else 0.0
     val total = cost + tax
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -298,6 +301,9 @@ fun CalculatorScreen(
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Number,
                                 imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = { focusManager.clearFocus() }
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()

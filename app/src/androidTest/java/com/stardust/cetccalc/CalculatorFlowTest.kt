@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -74,6 +75,7 @@ class CalculatorFlowTest {
 
         // Quantity 3 -> cost ٣٬٧٥٠, tax ٥٢٥, total ٤٬٢٧٥
         composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+        composeRule.onNodeWithTag("qtyField").performImeAction()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("costValue").assertTextEquals("٣٬٧٥٠ ج.م")
         composeRule.onNodeWithTag("taxValue").assertTextEquals("٥٢٥ ج.م")
@@ -93,6 +95,7 @@ class CalculatorFlowTest {
         composeRule.onNodeWithTag("pickerPopup").performScrollToNode(hasText("مطرقة ارتداد"))
         composeRule.onNodeWithText("مطرقة ارتداد").performClick()
         composeRule.onNodeWithTag("qtyField").performTextReplacement("5")
+        composeRule.onNodeWithTag("qtyField").performImeAction()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasText("الحد الأدنى للكمية", substring = true))
         composeRule.onNodeWithText("الحد الأدنى للكمية: ٣٠ قراءة").assertIsDisplayed()
