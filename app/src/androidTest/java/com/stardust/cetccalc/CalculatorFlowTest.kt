@@ -4,8 +4,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -74,8 +76,9 @@ class CalculatorFlowTest {
         // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
         composeRule.onNodeWithTag("testPicker").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithText("مطرقة ارتداد").assertIsDisplayed(); true }.getOrDefault(false)
+            runCatching { composeRule.onNodeWithTag("pickerList").assertIsDisplayed(); true }.getOrDefault(false)
         }
+        composeRule.onNodeWithTag("pickerList").performScrollToNode(hasText("مطرقة ارتداد"))
         composeRule.onNodeWithText("مطرقة ارتداد").performClick()
         composeRule.onNodeWithTag("qtyField").performTextReplacement("5")
         composeRule.waitForIdle()
