@@ -87,8 +87,10 @@ jobs:
             adb shell 'ls -la /sdcard/Android/data/com.stardust.cetccalc/ 2>&1' || true
             adb shell 'find /sdcard /storage/emulated -name "*home_empty*" 2>/dev/null' || true
             mkdir -p screenshots
-            adb pull /sdcard/Android/data/com.stardust.cetccalc/files/ screenshots/ || true
-            find screenshots -type f | sort || true
+            # Android 11+ hides Android/data/<pkg> from adb shell; use run-as (debuggable build) + tar through exec-out
+            adb exec-out "run-as com.stardust.cetccalc tar -cf - -C /sdcard/Android/data/com.stardust.cetccalc/files ." > shots.tar
+            tar -xf shots.tar -C screenshots/
+            find screenshots -type f -name '*.png' | sort
       - uses: actions/upload-artifact@v4
         with:
           name: emulator-screenshots

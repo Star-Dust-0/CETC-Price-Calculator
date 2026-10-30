@@ -27,6 +27,7 @@ class CalculatorFlowTest {
 
     private fun screenshot(name: String) {
         composeRule.waitForIdle()
+        Thread.sleep(500) // let popup/system windows finish drawing before UiDevice capture
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val dir = InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null)!!
         dir.mkdirs()
