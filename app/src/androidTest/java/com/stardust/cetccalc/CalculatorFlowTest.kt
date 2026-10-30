@@ -76,9 +76,9 @@ class CalculatorFlowTest {
         // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
         composeRule.onNodeWithTag("testPicker").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("pickerList").assertIsDisplayed(); true }.getOrDefault(false)
+            runCatching { composeRule.onNodeWithTag("pickerPopup").assertIsDisplayed(); true }.getOrDefault(false)
         }
-        composeRule.onNodeWithTag("pickerList").performScrollToNode(hasText("مطرقة ارتداد"))
+        composeRule.onNodeWithTag("pickerPopup").performScrollToNode(hasText("مطرقة ارتداد"))
         composeRule.onNodeWithText("مطرقة ارتداد").performClick()
         composeRule.onNodeWithTag("qtyField").performTextReplacement("5")
         composeRule.waitForIdle()

@@ -195,11 +195,6 @@ fun CalculatorScreen(
                         .background(OneUISurface, RoundedCornerShape(20.dp))
                         .testTag("pickerPopup")
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .verticalScroll(rememberScrollState())
-                            .testTag("pickerList")
-                    ) {
                     items.forEachIndexed { index, item ->
                         val isSelected = item.id == selected?.id
                         Row(
@@ -239,7 +234,6 @@ fun CalculatorScreen(
                         if (index < items.lastIndex) {
                             RowDivider()
                         }
-                    }
                     }
                 }
             }
