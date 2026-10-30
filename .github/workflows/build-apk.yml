@@ -80,9 +80,15 @@ jobs:
           disable-animations: true
           script: |
             gradle connectedDebugAndroidTest --stacktrace
+            echo '--- CETCShot logcat ---'
+            adb logcat -d -s CETCShot:I || true
+            echo '--- dir diagnostics ---'
+            adb shell 'ls -la /sdcard/Android/data/ | head -30' || true
+            adb shell 'ls -la /sdcard/Android/data/com.stardust.cetccalc/ 2>&1' || true
+            adb shell 'find /sdcard /storage/emulated -name "*home_empty*" 2>/dev/null' || true
             mkdir -p screenshots
-            adb pull /sdcard/Android/data/com.stardust.cetccalc/files/ screenshots/
-            ls -la screenshots/
+            adb pull /sdcard/Android/data/com.stardust.cetccalc/files/ screenshots/ || true
+            find screenshots -type f | sort || true
       - uses: actions/upload-artifact@v4
         with:
           name: emulator-screenshots

@@ -32,6 +32,7 @@ class CalculatorFlowTest {
         dir.mkdirs()
         val file = File(dir, "${"%02d".format(shotIndex++)}_$name.png")
         val ok = device.takeScreenshot(file)
+        android.util.Log.i("CETCShot", "takeScreenshot=$ok path=${file.absolutePath} exists=${file.exists()} len=${if (file.exists()) file.length() else -1}")
         check(ok && file.exists() && file.length() > 0) { "screenshot failed: ${file.absolutePath}" }
     }
 
