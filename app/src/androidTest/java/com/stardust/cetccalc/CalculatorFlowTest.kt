@@ -7,7 +7,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -29,7 +30,7 @@ class CalculatorFlowTest {
 
     private fun screenshot(name: String) {
         composeRule.waitForIdle()
-        val image = composeRule.onRoot().captureToImage()
+        val image = composeRule.onAllNodes(isRoot()).onFirst().captureToImage()
         val pixels = IntArray(image.width * image.height)
         image.readPixels(pixels)
         val bitmap = Bitmap.createBitmap(pixels, image.width, image.height, Bitmap.Config.ARGB_8888)
