@@ -1,5 +1,6 @@
 package com.stardust.cetccalc
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -7,10 +8,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performImeAction
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
@@ -73,26 +72,6 @@ class CalculatorFlowTest {
         }
     }
 
-    private fun toggleTaxAndAwaitTotal(expected: String) {
-        // performClick injects a real touch at the node center, which has proven flaky on the
-        // CI emulator (touches intermittently swallowed near the IME/nav area). The semantics
-        // action invocation is coordinate-free and deterministic; it tests OUR state wiring.
-        repeat(2) { attempt ->
-            android.util.Log.i("CETCTax", "click attempt ${attempt + 1}, switch: " + composeRule.onNodeWithTag("taxSwitch").fetchSemanticsNode().config.toString())
-            composeRule.onNodeWithTag("taxSwitch").performSemanticsAction(SemanticsActions.OnClick)
-            val reached = runCatching {
-                composeRule.waitUntil(timeoutMillis = 3_000) {
-                    runCatching { composeRule.onNodeWithTag("totalValue").assertTextEquals(expected); true }.getOrDefault(false)
-                }
-            }.isSuccess
-            if (reached) {
-                android.util.Log.i("CETCTax", "total now: " + composeRule.onNodeWithTag("totalValue").fetchSemanticsNode().config.toString())
-                return
-            }
-        }
-        composeRule.onNodeWithTag("totalValue").assertTextEquals(expected)
-    }
-
     private fun waitForPicker() {
         composeRule.waitUntil(timeoutMillis = 15_000) {
             runCatching { composeRule.onNodeWithTag("testPicker").assertIsDisplayed(); true }.getOrDefault(false)
@@ -127,10 +106,8 @@ class CalculatorFlowTest {
         composeRule.onNodeWithTag("totalValue").assertTextEquals("٤٬٢٧٥ ج.م")
         screenshot("qty3_with_tax")
 
-        // Tax off -> total equals cost
-        toggleTaxAndAwaitTotal("٣٬٧٥٠ ج.م")
-        screenshot("qty3_no_tax")
-        toggleTaxAndAwaitTotal("٤٬٢٧٥ ج.م")
+        // VAT is always on: no switch exists, total always includes the 14%
+        composeRule.onNodeWithTag("taxSwitch").assertDoesNotExist()
 
         // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
         composeRule.onNodeWithTag("testPicker").performClick()

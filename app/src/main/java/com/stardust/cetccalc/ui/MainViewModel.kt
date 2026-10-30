@@ -33,9 +33,6 @@ class MainViewModel(app: Application) : ViewModel() {
     private val _qtyText = MutableStateFlow("1")
     val qtyText: StateFlow<String> = _qtyText
 
-    private val _taxEnabled = MutableStateFlow(true)
-    val taxEnabled: StateFlow<Boolean> = _taxEnabled
-
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage
 
@@ -50,8 +47,6 @@ class MainViewModel(app: Application) : ViewModel() {
         val filtered = text.filter { it.isDigit() || it in '٠'..'٩' || it in '۰'..'۹' }.take(6)
         _qtyText.value = filtered
     }
-
-    fun setTaxEnabled(enabled: Boolean) { _taxEnabled.value = enabled }
 
     fun clearStatus() { _statusMessage.value = null }
 

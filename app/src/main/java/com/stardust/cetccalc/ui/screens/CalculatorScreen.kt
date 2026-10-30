@@ -27,8 +27,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -78,10 +76,8 @@ fun CalculatorScreen(
     dbVersion: String,
     selected: TestItem?,
     qtyText: String,
-    taxEnabled: Boolean,
     onSelect: (Int) -> Unit,
     onQtyChange: (String) -> Unit,
-    onTaxChange: (Boolean) -> Unit,
     onOpenDatabase: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
@@ -91,7 +87,8 @@ fun CalculatorScreen(
     val qty = qtyText.toIntOrNull() ?: com.stardust.cetccalc.util.parseLocalizedInt(qtyText) ?: 0
     val unitPrice = selected?.unitPrice ?: 0.0
     val cost = unitPrice * qty
-    val tax = if (taxEnabled) cost * 0.14 else 0.0
+    // VAT 14% always applies (Mohamed's decision, 2026-10-30)
+    val tax = cost * 0.14
     val total = cost + tax
     val focusManager = LocalFocusManager.current
 
@@ -330,23 +327,7 @@ fun CalculatorScreen(
                     label = "ضريبة القيمة المضافة (١٤٪)",
                     sublabel = "عند طلب فاتورة إلكترونية"
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (taxEnabled) {
-                            ValueText(formatMoney(tax), modifier = Modifier.testTag("taxValue"))
-                            Spacer(modifier = Modifier.width(10.dp))
-                        }
-                        Switch(
-                            checked = taxEnabled,
-                            onCheckedChange = onTaxChange,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = OneUIBlue,
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = OneUIOutline
-                            ),
-                            modifier = Modifier.testTag("taxSwitch")
-                        )
-                    }
+                    ValueText(formatMoney(tax), modifier = Modifier.testTag("taxValue"))
                 }
             }
 
@@ -371,7 +352,7 @@ fun CalculatorScreen(
                             style = MaterialTheme.typography.titleLarge
                         )
                         Text(
-                            text = if (taxEnabled) "التكلفة + الضريبة" else "التكلفة بدون ضريبة",
+                            text = "التكلفة + الضريبة",
                             color = Color.White.copy(alpha = 0.85f),
                             style = MaterialTheme.typography.bodySmall
                         )

@@ -45,7 +45,6 @@ fun AppNav() {
     val dbVersion by vm.dbVersion.collectAsState()
     val selectedId by vm.selectedId.collectAsState()
     val qtyText by vm.qtyText.collectAsState()
-    val taxEnabled by vm.taxEnabled.collectAsState()
     val statusMessage by vm.statusMessage.collectAsState()
 
     NavHost(
@@ -62,10 +61,8 @@ fun AppNav() {
                 dbVersion = dbVersion,
                 selected = items.firstOrNull { it.id == selectedId },
                 qtyText = qtyText,
-                taxEnabled = taxEnabled,
                 onSelect = vm::select,
                 onQtyChange = vm::setQty,
-                onTaxChange = vm::setTaxEnabled,
                 onOpenDatabase = { navController.navigate("database") },
                 onOpenAbout = { navController.navigate("about") }
             )
