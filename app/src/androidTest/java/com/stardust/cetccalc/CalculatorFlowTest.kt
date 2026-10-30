@@ -1,9 +1,10 @@
 package com.stardust.cetccalc
 
-import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
@@ -107,7 +108,7 @@ class CalculatorFlowTest {
         screenshot("qty3_with_tax")
 
         // VAT is always on: no switch exists, total always includes the 14%
-        composeRule.onNodeWithTag("taxSwitch").assertDoesNotExist()
+        composeRule.onAllNodesWithTag("taxSwitch").assertCountEquals(0)
 
         // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
         composeRule.onNodeWithTag("testPicker").performClick()
