@@ -2,17 +2,19 @@ package com.stardust.cetccalc
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.hasText
+
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.performScrollToNode
+
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -123,6 +125,61 @@ class CalculatorFlowTest {
         composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasText("الحد الأدنى للكمية", substring = true))
         composeRule.onNodeWithText("الحد الأدنى للكمية: ٣٠ قراءة").assertIsDisplayed()
         screenshot("min_warning")
+    }
+
+    @Test
+    fun darkThemeScreenshots() {
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        try {
+            automation.executeShellCommand("cmd uimode night yes").close()
+            waitForPicker()
+            composeRule.waitForIdle()
+            Thread.sleep(1200) // let the recreated activity settle
+            screenshot("home_dark")
+
+            composeRule.onNodeWithTag("testPicker").performClick()
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                runCatching { composeRule.onNodeWithTag("pickerSearchField").assertIsDisplayed(); true }.getOrDefault(false)
+            }
+            composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("مكعبات")
+            composeRule.waitForIdle()
+            screenshot("search_dark")
+            composeRule.onNodeWithText("مكعبات خرسانية").performClick()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+            composeRule.onNodeWithTag("qty2Field").performTextReplacement("2")
+            composeRule.onNodeWithTag("qty2Field").performImeAction()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithTag("totalValue").assertTextEquals("٣١٩٫٢ ج.م")
+            screenshot("paired_dark")
+        } finally {
+            automation.executeShellCommand("cmd uimode night no").close()
+        }
+    }
+
+    @Test
+    fun searchFiltersThePickerInstantly() {
+        waitForPicker()
+        composeRule.onNodeWithTag("testPicker").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("pickerSearchField").assertIsDisplayed(); true }.getOrDefault(false)
+        }
+        // Full list first (empty query), then instant Arabic-normalized filtering
+        composeRule.onNodeWithTag("pickerPopup").performScrollToNode(hasText("بروكتور رمل"))
+        composeRule.onNodeWithText("بروكتور رمل").assertIsDisplayed()
+        composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("اسطوانات")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("أسطوانات خرسانية").assertIsDisplayed()
+        composeRule.onNodeWithText("بروكتور رمل").assertDoesNotExist()
+        screenshot("search_filter")
+        // Multi-word, any order
+        composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("خرسانيه اسطوانات")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("أسطوانات خرسانية").assertIsDisplayed()
+        composeRule.onNodeWithText("أسطوانات خرسانية").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("qtyField").assertIsDisplayed()
+        composeRule.onNodeWithTag("qty2Field").assertIsDisplayed()
     }
 
     @Test

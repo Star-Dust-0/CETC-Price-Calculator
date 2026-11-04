@@ -2,6 +2,8 @@ package com.stardust.cetccalc.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,14 +32,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stardust.cetccalc.data.PickerEntry
 import com.stardust.cetccalc.data.SamplePairing
+import com.stardust.cetccalc.util.ArabicSearch
 import com.stardust.cetccalc.ui.components.CreditFooter
 import com.stardust.cetccalc.ui.components.OneUISectionCard
 import com.stardust.cetccalc.ui.components.PriceRow
@@ -65,6 +78,7 @@ import com.stardust.cetccalc.ui.theme.OneUIMenuBg
 import com.stardust.cetccalc.ui.theme.OneUIMenuText
 import com.stardust.cetccalc.ui.theme.OneUIOutline
 import com.stardust.cetccalc.ui.theme.OneUISurface
+import com.stardust.cetccalc.ui.theme.OneUISurfaceContainer
 import com.stardust.cetccalc.ui.theme.OneUITextPrimary
 import com.stardust.cetccalc.ui.theme.OneUITextSecondary
 import com.stardust.cetccalc.ui.theme.OneUIWarning
@@ -82,10 +96,14 @@ fun CalculatorScreen(
     onSelect: (Int) -> Unit,
     onQtyChange: (String) -> Unit,
     onQty2Change: (String) -> Unit,
+    onQtyInc: () -> Unit,
+    onQtyDec: () -> Unit,
+    onQty2Inc: () -> Unit,
+    onQty2Dec: () -> Unit,
     onOpenDatabase: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
-    var pickerExpanded by remember { mutableStateOf(false) }
+    var searchOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
 
     val qty = parseLocalizedInt(qtyText) ?: 0
@@ -166,95 +184,52 @@ fun CalculatorScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Test type picker
+        // Test type picker: search-first (Mohamed 2026-11-04: "scrolling the list
+        // every time is illogical" - the search field is the primary way to pick)
         OneUISectionCard(title = "نوع الاختبار") {
-            Box {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("testPicker")
-                        .border(1.5.dp, OneUIOutline, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { pickerExpanded = true }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = selected?.title ?: "اختر الاختبار",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = if (selected != null) OneUITextPrimary else OneUITextSecondary
-                        )
-                        if (selected != null) {
-                            Text(
-                                text = selected.category,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = OneUITextSecondary
-                            )
-                        }
-                    }
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = OneUITextSecondary
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("testPicker")
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(OneUISurfaceContainer)
+                    .clickable { searchOpen = true }
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = null,
+                    tint = OneUITextSecondary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = selected?.title ?: "ابحث عن الاختبار أو الخدمة",
+                        style = if (selected != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                        color = if (selected != null) OneUITextPrimary else OneUITextSecondary
                     )
-                }
-                DropdownMenu(
-                    expanded = pickerExpanded,
-                    onDismissRequest = { pickerExpanded = false },
-                    modifier = Modifier
-                        .fillMaxWidth(0.88f)
-                        .heightIn(max = 480.dp)
-                        .background(OneUISurface, RoundedCornerShape(20.dp))
-                        .testTag("pickerPopup")
-                ) {
-                    entries.forEachIndexed { index, entry ->
-                        val isSelected = entry.id == selected?.id
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(if (isSelected) OneUIChipBlue else Color.Transparent)
-                                .clickable {
-                                    onSelect(entry.id)
-                                    pickerExpanded = false
-                                }
-                                .padding(horizontal = 16.dp, vertical = 13.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = entry.title,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = OneUITextPrimary
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = when (entry) {
-                                    is PickerEntry.Single -> formatMoney(entry.item.unitPrice)
-                                    is PickerEntry.Paired ->
-                                        formatMoney(entry.sample.unitPrice).removeSuffix(" ج.م") +
-                                            " + " + formatMoney(entry.report.unitPrice)
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = OneUIBlue
-                            )
-                            if (isSelected) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = null,
-                                    tint = OneUIBlue
-                                )
-                            }
-                        }
-                        if (index < entries.lastIndex) {
-                            RowDivider()
-                        }
+                    if (selected != null) {
+                        Text(
+                            text = selected.category,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OneUITextSecondary
+                        )
                     }
                 }
             }
+        }
+
+        if (searchOpen) {
+            SearchPickerDialog(
+                entries = entries,
+                selectedId = selected?.id,
+                onSelect = { id ->
+                    onSelect(id)
+                    searchOpen = false
+                },
+                onDismiss = { searchOpen = false }
+            )
         }
 
         // Test details
@@ -315,7 +290,7 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                     PriceRow(label = SamplePairing.countLabel(paired.sample.unit)) {
-                        QtyField(value = qtyText, onValueChange = onQtyChange, tag = "qtyField") { focusManager.clearFocus() }
+                        QtyStepper(value = qtyText, onValueChange = onQtyChange, onIncrement = onQtyInc, onDecrement = onQtyDec, tag = "qtyField") { focusManager.clearFocus() }
                     }
                     val sampleMin = paired.sample.minQty
                     if (sampleMin != null && qty in 1 until sampleMin) {
@@ -323,7 +298,7 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                     PriceRow(label = SamplePairing.countLabel(paired.report.unit)) {
-                        QtyField(value = qty2Text, onValueChange = onQty2Change, tag = "qty2Field") { focusManager.clearFocus() }
+                        QtyStepper(value = qty2Text, onValueChange = onQty2Change, onIncrement = onQty2Inc, onDecrement = onQty2Dec, tag = "qty2Field") { focusManager.clearFocus() }
                     }
                     val reportMin = paired.report.minQty
                     if (reportMin != null && qty2 in 1 until reportMin) {
@@ -336,7 +311,7 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                     PriceRow(label = "الكمية") {
-                        QtyField(value = qtyText, onValueChange = onQtyChange, tag = "qtyField") { focusManager.clearFocus() }
+                        QtyStepper(value = qtyText, onValueChange = onQtyChange, onIncrement = onQtyInc, onDecrement = onQtyDec, tag = "qtyField") { focusManager.clearFocus() }
                     }
                     val minQty = single?.item?.minQty
                     if (minQty != null && qty in 1 until minQty) {
@@ -344,16 +319,30 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                 }
-                PriceRow(label = "التكلفة") {
-                    ValueText(formatMoney(cost), modifier = Modifier.testTag("costValue"))
-                }
-                RowDivider()
-                PriceRow(
-                    label = "ضريبة القيمة المضافة (١٤٪)",
-                    sublabel = "عند طلب فاتورة إلكترونية"
-                ) {
-                    ValueText(formatMoney(tax), modifier = Modifier.testTag("taxValue"))
-                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Cost and VAT cards: equal prominence to the total card
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                BigAmountCard(
+                    label = "التكلفة",
+                    value = formatMoney(cost),
+                    tag = "costValue",
+                    modifier = Modifier.weight(1f)
+                )
+                BigAmountCard(
+                    label = "ضريبة القيمة المضافة ١٤٪",
+                    sublabel = "عند طلب فاتورة إلكترونية",
+                    value = formatMoney(tax),
+                    tag = "taxValue",
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -395,6 +384,70 @@ fun CalculatorScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
         CreditFooter()
+    }
+}
+
+@Composable
+private fun QtyStepper(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    tag: String,
+    onDone: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, OneUIOutline, CircleShape)
+                .clickable(onClick = onDecrement)
+                .testTag(tag + "Minus"),
+            contentAlignment = Alignment.Center
+        ) { Text("\u2212", color = OneUITextSecondary, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+        Spacer(modifier = Modifier.width(8.dp))
+        QtyField(value = value, onValueChange = onValueChange, tag = tag, onDone = onDone)
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(OneUIBlue)
+                .clickable(onClick = onIncrement)
+                .testTag(tag + "Plus"),
+            contentAlignment = Alignment.Center
+        ) { Text("+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+private fun BigAmountCard(
+    label: String,
+    value: String,
+    tag: String,
+    modifier: Modifier = Modifier,
+    sublabel: String? = null
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = OneUISurfaceContainer)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = OneUITextSecondary)
+            if (sublabel != null) {
+                Text(sublabel, style = MaterialTheme.typography.bodySmall, color = OneUITextSecondary)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                color = OneUITextPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                modifier = Modifier.testTag(tag)
+            )
+        }
     }
 }
 
@@ -455,4 +508,147 @@ private fun OverflowMenuItem(text: String, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 13.dp)
     )
+}
+
+@Composable
+private fun SearchPickerDialog(
+    entries: List<PickerEntry>,
+    selectedId: Int?,
+    onSelect: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+    val filtered = ArabicSearch.filterEntries(entries, query)
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding(),
+            color = OneUIBackground
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "رجوع",
+                            tint = OneUITextPrimary
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 16.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(OneUISurfaceContainer)
+                            .padding(horizontal = 20.dp, vertical = 14.dp)
+                    ) {
+                        BasicTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.titleMedium.copy(color = OneUITextPrimary),
+                            cursorBrush = SolidColor(OneUIBlue),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Search
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                                .testTag("pickerSearchField"),
+                            decorationBox = { inner ->
+                                if (query.isEmpty()) {
+                                    Text(
+                                        text = "ابحث عن الاختبار أو الخدمة",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = OneUITextSecondary
+                                    )
+                                }
+                                inner()
+                            }
+                        )
+                    }
+                }
+                LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+                if (filtered.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "لا توجد نتائج مطابقة",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = OneUITextSecondary
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("pickerPopup")
+                    ) {
+                        items(filtered, key = { it.id }) { entry ->
+                            val isSelected = entry.id == selectedId
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(if (isSelected) OneUIChipBlue else Color.Transparent)
+                                    .clickable { onSelect(entry.id) }
+                                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = entry.title,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = OneUITextPrimary
+                                    )
+                                    Text(
+                                        text = entry.category,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OneUITextSecondary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = when (entry) {
+                                        is PickerEntry.Single -> formatMoney(entry.item.unitPrice)
+                                        is PickerEntry.Paired ->
+                                            formatMoney(entry.sample.unitPrice).removeSuffix(" ج.م") +
+                                                " + " + formatMoney(entry.report.unitPrice)
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = OneUIBlue
+                                )
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = OneUIBlue
+                                    )
+                                }
+                            }
+                            RowDivider()
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

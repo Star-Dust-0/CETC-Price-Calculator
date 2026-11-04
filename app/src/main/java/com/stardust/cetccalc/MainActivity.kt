@@ -5,7 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -52,10 +53,10 @@ fun AppNav() {
     NavHost(
         navController = navController,
         startDestination = "calculator",
-        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
-        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
-        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) },
-        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) }
+        enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow)) },
+        exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow)) },
+        popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow)) },
+        popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, spring(dampingRatio = 0.86f, stiffness = Spring.StiffnessMediumLow)) }
     ) {
         composable("calculator") {
             val entries = SamplePairing.buildPickerEntries(items)
@@ -68,6 +69,10 @@ fun AppNav() {
                 onSelect = vm::select,
                 onQtyChange = vm::setQty,
                 onQty2Change = vm::setQty2,
+                onQtyInc = vm::incrementQty,
+                onQtyDec = vm::decrementQty,
+                onQty2Inc = vm::incrementQty2,
+                onQty2Dec = vm::decrementQty2,
                 onOpenDatabase = { navController.navigate("database") },
                 onOpenAbout = { navController.navigate("about") }
             )
