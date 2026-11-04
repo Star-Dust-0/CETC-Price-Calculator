@@ -205,7 +205,50 @@ class CalculatorFlowTest {
         composeRule.onNodeWithTag("costValue").assertTextEquals("٢٨٠ ج.م")
         composeRule.onNodeWithTag("taxValue").assertTextEquals("٣٩٫٢ ج.م")
         composeRule.onNodeWithTag("totalValue").assertTextEquals("٣١٩٫٢ ج.م")
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("totalValue"))
         screenshot("paired_cubes_reports")
+    }
+
+    @Test
+    fun pairedCylindersAndGrout() {
+        // Cylinders: 3 * 100 + 1 report * 100 = 400, VAT 56, total 456
+        selectPaired("أسطوانات خرسانية")
+        composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+        composeRule.onNodeWithTag("qtyField").performImeAction()
+        composeRule.onNodeWithTag("qty2Field").performTextReplacement("1")
+        composeRule.onNodeWithTag("qty2Field").performImeAction()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("costValue").assertTextEquals("٤٠٠ ج.م")
+        composeRule.onNodeWithTag("taxValue").assertTextEquals("٥٦ ج.م")
+        composeRule.onNodeWithTag("totalValue").assertTextEquals("٤٥٦ ج.م")
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("totalValue"))
+        screenshot("paired_cylinders")
+
+        // Grout: 3 * 50 + 1 report * 150 = 300, VAT 42, total 342
+        selectPaired("عينات جراوت")
+        composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+        composeRule.onNodeWithTag("qtyField").performImeAction()
+        composeRule.onNodeWithTag("qty2Field").performTextReplacement("1")
+        composeRule.onNodeWithTag("qty2Field").performImeAction()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("costValue").assertTextEquals("٣٠٠ ج.م")
+        composeRule.onNodeWithTag("taxValue").assertTextEquals("٤٢ ج.م")
+        composeRule.onNodeWithTag("totalValue").assertTextEquals("٣٤٢ ج.م")
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("totalValue"))
+        screenshot("paired_grout")
+    }
+
+    private fun selectPaired(title: String) {
+        waitForPicker()
+        composeRule.onNodeWithTag("testPicker").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("pickerPopup").assertIsDisplayed(); true }.getOrDefault(false)
+        }
+        composeRule.onNodeWithTag("pickerPopup").performScrollToNode(hasText(title))
+        composeRule.onNodeWithText(title).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("qty2Field").assertExists(); true }.getOrDefault(false)
+        }
     }
 
     @Test
