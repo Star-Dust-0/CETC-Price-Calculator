@@ -2,6 +2,7 @@ package com.stardust.cetccalc
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.assertTextEquals
@@ -178,7 +179,7 @@ class CalculatorFlowTest {
         composeRule.onNodeWithText("أسطوانات خرسانية").assertIsDisplayed()
         composeRule.onNodeWithText("أسطوانات خرسانية").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("qtyField").assertIsDisplayed()
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("qty2Field"))
         composeRule.onNodeWithTag("qty2Field").assertIsDisplayed()
     }
 
