@@ -57,6 +57,11 @@ class MainViewModel(app: Application) : ViewModel() {
         _qty2Text.value = filtered
     }
 
+    fun incrementQty() { _qtyText.value = (quantity() + 1).coerceAtMost(999999).toString() }
+    fun decrementQty() { _qtyText.value = (quantity() - 1).coerceAtLeast(1).toString() }
+    fun incrementQty2() { _qty2Text.value = (quantity2() + 1).coerceAtMost(999999).toString() }
+    fun decrementQty2() { _qty2Text.value = (quantity2() - 1).coerceAtLeast(1).toString() }
+
     fun clearStatus() { _statusMessage.value = null }
 
     fun quantity(): Int = parseLocalizedInt(_qtyText.value) ?: 0

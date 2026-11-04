@@ -69,6 +69,10 @@ fun AppNav() {
                 onSelect = vm::select,
                 onQtyChange = vm::setQty,
                 onQty2Change = vm::setQty2,
+                onQtyInc = vm::incrementQty,
+                onQtyDec = vm::decrementQty,
+                onQty2Inc = vm::incrementQty2,
+                onQty2Dec = vm::decrementQty2,
                 onOpenDatabase = { navController.navigate("database") },
                 onOpenAbout = { navController.navigate("about") }
             )

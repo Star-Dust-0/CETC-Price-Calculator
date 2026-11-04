@@ -2,6 +2,8 @@ package com.stardust.cetccalc.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -93,6 +96,10 @@ fun CalculatorScreen(
     onSelect: (Int) -> Unit,
     onQtyChange: (String) -> Unit,
     onQty2Change: (String) -> Unit,
+    onQtyInc: () -> Unit,
+    onQtyDec: () -> Unit,
+    onQty2Inc: () -> Unit,
+    onQty2Dec: () -> Unit,
     onOpenDatabase: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
@@ -283,7 +290,7 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                     PriceRow(label = SamplePairing.countLabel(paired.sample.unit)) {
-                        QtyField(value = qtyText, onValueChange = onQtyChange, tag = "qtyField") { focusManager.clearFocus() }
+                        QtyStepper(value = qtyText, onValueChange = onQtyChange, onIncrement = onQtyInc, onDecrement = onQtyDec, tag = "qtyField") { focusManager.clearFocus() }
                     }
                     val sampleMin = paired.sample.minQty
                     if (sampleMin != null && qty in 1 until sampleMin) {
@@ -291,7 +298,7 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                     PriceRow(label = SamplePairing.countLabel(paired.report.unit)) {
-                        QtyField(value = qty2Text, onValueChange = onQty2Change, tag = "qty2Field") { focusManager.clearFocus() }
+                        QtyStepper(value = qty2Text, onValueChange = onQty2Change, onIncrement = onQty2Inc, onDecrement = onQty2Dec, tag = "qty2Field") { focusManager.clearFocus() }
                     }
                     val reportMin = paired.report.minQty
                     if (reportMin != null && qty2 in 1 until reportMin) {
@@ -304,7 +311,7 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                     PriceRow(label = "الكمية") {
-                        QtyField(value = qtyText, onValueChange = onQtyChange, tag = "qtyField") { focusManager.clearFocus() }
+                        QtyStepper(value = qtyText, onValueChange = onQtyChange, onIncrement = onQtyInc, onDecrement = onQtyDec, tag = "qtyField") { focusManager.clearFocus() }
                     }
                     val minQty = single?.item?.minQty
                     if (minQty != null && qty in 1 until minQty) {
@@ -312,16 +319,30 @@ fun CalculatorScreen(
                     }
                     RowDivider()
                 }
-                PriceRow(label = "التكلفة") {
-                    ValueText(formatMoney(cost), modifier = Modifier.testTag("costValue"))
-                }
-                RowDivider()
-                PriceRow(
-                    label = "ضريبة القيمة المضافة (١٤٪)",
-                    sublabel = "عند طلب فاتورة إلكترونية"
-                ) {
-                    ValueText(formatMoney(tax), modifier = Modifier.testTag("taxValue"))
-                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Cost and VAT cards: equal prominence to the total card
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                BigAmountCard(
+                    label = "التكلفة",
+                    value = formatMoney(cost),
+                    tag = "costValue",
+                    modifier = Modifier.weight(1f)
+                )
+                BigAmountCard(
+                    label = "ضريبة القيمة المضافة ١٤٪",
+                    sublabel = "عند طلب فاتورة إلكترونية",
+                    value = formatMoney(tax),
+                    tag = "taxValue",
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -363,6 +384,70 @@ fun CalculatorScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
         CreditFooter()
+    }
+}
+
+@Composable
+private fun QtyStepper(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    tag: String,
+    onDone: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, OneUIOutline, CircleShape)
+                .clickable(onClick = onDecrement)
+                .testTag(tag + "Minus"),
+            contentAlignment = Alignment.Center
+        ) { Text("\u2212", color = OneUITextSecondary, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+        Spacer(modifier = Modifier.width(8.dp))
+        QtyField(value = value, onValueChange = onValueChange, tag = tag, onDone = onDone)
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(OneUIBlue)
+                .clickable(onClick = onIncrement)
+                .testTag(tag + "Plus"),
+            contentAlignment = Alignment.Center
+        ) { Text("+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+private fun BigAmountCard(
+    label: String,
+    value: String,
+    tag: String,
+    modifier: Modifier = Modifier,
+    sublabel: String? = null
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = OneUISurfaceContainer)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = OneUITextSecondary)
+            if (sublabel != null) {
+                Text(sublabel, style = MaterialTheme.typography.bodySmall, color = OneUITextSecondary)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                color = OneUITextPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                modifier = Modifier.testTag(tag)
+            )
+        }
     }
 }
 
