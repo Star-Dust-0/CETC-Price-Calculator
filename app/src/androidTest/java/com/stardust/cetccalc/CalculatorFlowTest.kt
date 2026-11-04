@@ -127,6 +127,36 @@ class CalculatorFlowTest {
     }
 
     @Test
+    fun darkThemeScreenshots() {
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        try {
+            automation.executeShellCommand("cmd uimode night yes").close()
+            waitForPicker()
+            composeRule.waitForIdle()
+            Thread.sleep(1200) // let the recreated activity settle
+            screenshot("home_dark")
+
+            composeRule.onNodeWithTag("testPicker").performClick()
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                runCatching { composeRule.onNodeWithTag("pickerSearchField").assertIsDisplayed(); true }.getOrDefault(false)
+            }
+            composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("مكعبات")
+            composeRule.waitForIdle()
+            screenshot("search_dark")
+            composeRule.onNodeWithText("مكعبات خرسانية").performClick()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+            composeRule.onNodeWithTag("qty2Field").performTextReplacement("2")
+            composeRule.onNodeWithTag("qty2Field").performImeAction()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithTag("totalValue").assertTextEquals("٣١٩٫٢ ج.م")
+            screenshot("paired_dark")
+        } finally {
+            automation.executeShellCommand("cmd uimode night no").close()
+        }
+    }
+
+    @Test
     fun searchFiltersThePickerInstantly() {
         waitForPicker()
         composeRule.onNodeWithTag("testPicker").performClick()
