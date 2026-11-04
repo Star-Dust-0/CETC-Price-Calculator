@@ -1,6 +1,7 @@
 package com.stardust.cetccalc
 
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -123,6 +124,30 @@ class CalculatorFlowTest {
         composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasText("الحد الأدنى للكمية", substring = true))
         composeRule.onNodeWithText("الحد الأدنى للكمية: ٣٠ قراءة").assertIsDisplayed()
         screenshot("min_warning")
+    }
+
+    @Test
+    fun searchFiltersThePickerInstantly() {
+        waitForPicker()
+        composeRule.onNodeWithTag("testPicker").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("pickerSearchField").assertIsDisplayed(); true }.getOrDefault(false)
+        }
+        // Full list first (empty query), then instant Arabic-normalized filtering
+        composeRule.onNodeWithText("بروكتور رمل").assertIsDisplayed()
+        composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("اسطوانات")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("أسطوانات خرسانية").assertIsDisplayed()
+        composeRule.onNodeWithText("بروكتور رمل").assertDoesNotExist()
+        screenshot("search_filter")
+        // Multi-word, any order
+        composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("خرسانيه اسطوانات")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("أسطوانات خرسانية").assertIsDisplayed()
+        composeRule.onNodeWithText("أسطوانات خرسانية").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("qtyField").assertIsDisplayed()
+        composeRule.onNodeWithTag("qty2Field").assertIsDisplayed()
     }
 
     @Test
