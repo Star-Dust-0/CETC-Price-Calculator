@@ -126,6 +126,31 @@ class CalculatorFlowTest {
     }
 
     @Test
+    fun pairedSampleAndReportPricing() {
+        waitForPicker()
+        composeRule.onNodeWithTag("testPicker").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching { composeRule.onNodeWithTag("pickerPopup").assertIsDisplayed(); true }.getOrDefault(false)
+        }
+        composeRule.onNodeWithTag("pickerPopup").performScrollToNode(hasText("مكعبات خرسانية"))
+        composeRule.onNodeWithText("مكعبات خرسانية").performClick()
+        composeRule.waitForIdle()
+
+        // Two unit prices, two quantity inputs: 3 cubes * 40 + 2 reports * 80 = 280
+        composeRule.onNodeWithTag("unitPriceValue").assertTextEquals("٤٠ ج.م")
+        composeRule.onNodeWithTag("reportPriceValue").assertTextEquals("٨٠ ج.م")
+        composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+        composeRule.onNodeWithTag("qtyField").performImeAction()
+        composeRule.onNodeWithTag("qty2Field").performTextReplacement("2")
+        composeRule.onNodeWithTag("qty2Field").performImeAction()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("costValue").assertTextEquals("٢٨٠ ج.م")
+        composeRule.onNodeWithTag("taxValue").assertTextEquals("٣٩٫٢ ج.م")
+        composeRule.onNodeWithTag("totalValue").assertTextEquals("٣١٩٫٢ ج.م")
+        screenshot("paired_cubes_reports")
+    }
+
+    @Test
     fun databaseAndAboutScreens() {
         waitForPicker()
         composeRule.onNodeWithTag("menuButton").performClick()

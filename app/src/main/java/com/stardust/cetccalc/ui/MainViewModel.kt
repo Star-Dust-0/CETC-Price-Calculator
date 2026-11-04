@@ -33,6 +33,10 @@ class MainViewModel(app: Application) : ViewModel() {
     private val _qtyText = MutableStateFlow("1")
     val qtyText: StateFlow<String> = _qtyText
 
+    // Second quantity for paired sample+report entries (e.g. number of reports).
+    private val _qty2Text = MutableStateFlow("1")
+    val qty2Text: StateFlow<String> = _qty2Text
+
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage
 
@@ -48,9 +52,16 @@ class MainViewModel(app: Application) : ViewModel() {
         _qtyText.value = filtered
     }
 
+    fun setQty2(text: String) {
+        val filtered = text.filter { it.isDigit() || it in '٠'..'٩' || it in '۰'..'۹' }.take(6)
+        _qty2Text.value = filtered
+    }
+
     fun clearStatus() { _statusMessage.value = null }
 
     fun quantity(): Int = parseLocalizedInt(_qtyText.value) ?: 0
+
+    fun quantity2(): Int = parseLocalizedInt(_qty2Text.value) ?: 0
 
     fun selectedItem(): TestItem? = items.value.firstOrNull { it.id == _selectedId.value }
 

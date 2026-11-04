@@ -51,7 +51,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.stardust.cetccalc.data.TestItem
+import com.stardust.cetccalc.data.PickerEntry
+import com.stardust.cetccalc.data.SamplePairing
 import com.stardust.cetccalc.ui.components.CreditFooter
 import com.stardust.cetccalc.ui.components.OneUISectionCard
 import com.stardust.cetccalc.ui.components.PriceRow
@@ -69,24 +70,35 @@ import com.stardust.cetccalc.ui.theme.OneUITextSecondary
 import com.stardust.cetccalc.ui.theme.OneUIWarning
 import com.stardust.cetccalc.util.formatCount
 import com.stardust.cetccalc.util.formatMoney
+import com.stardust.cetccalc.util.parseLocalizedInt
 
 @Composable
 fun CalculatorScreen(
-    items: List<TestItem>,
+    entries: List<PickerEntry>,
     dbVersion: String,
-    selected: TestItem?,
+    selected: PickerEntry?,
     qtyText: String,
+    qty2Text: String,
     onSelect: (Int) -> Unit,
     onQtyChange: (String) -> Unit,
+    onQty2Change: (String) -> Unit,
     onOpenDatabase: () -> Unit,
     onOpenAbout: () -> Unit
 ) {
     var pickerExpanded by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
 
-    val qty = qtyText.toIntOrNull() ?: com.stardust.cetccalc.util.parseLocalizedInt(qtyText) ?: 0
-    val unitPrice = selected?.unitPrice ?: 0.0
-    val cost = unitPrice * qty
+    val qty = parseLocalizedInt(qtyText) ?: 0
+    val qty2 = parseLocalizedInt(qty2Text) ?: 0
+    val single = selected as? PickerEntry.Single
+    val paired = selected as? PickerEntry.Paired
+    val unitPrice = single?.item?.unitPrice ?: paired?.sample?.unitPrice ?: 0.0
+    // Paired sample+report entries: samples * sample price + reports * report price (Mohamed's spec 2026-11-04)
+    val cost = if (paired != null) {
+        SamplePairing.pairedCost(paired.sample.unitPrice, qty, paired.report.unitPrice, qty2)
+    } else {
+        unitPrice * qty
+    }
     // VAT 14% always applies (Mohamed's decision, 2026-10-30)
     val tax = cost * 0.14
     val total = cost + tax
@@ -169,7 +181,7 @@ fun CalculatorScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = selected?.name ?: "اختر الاختبار",
+                            text = selected?.title ?: "اختر الاختبار",
                             style = MaterialTheme.typography.titleMedium,
                             color = if (selected != null) OneUITextPrimary else OneUITextSecondary
                         )
@@ -196,14 +208,14 @@ fun CalculatorScreen(
                         .background(OneUISurface, RoundedCornerShape(20.dp))
                         .testTag("pickerPopup")
                 ) {
-                    items.forEachIndexed { index, item ->
-                        val isSelected = item.id == selected?.id
+                    entries.forEachIndexed { index, entry ->
+                        val isSelected = entry.id == selected?.id
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(if (isSelected) OneUIChipBlue else Color.Transparent)
                                 .clickable {
-                                    onSelect(item.id)
+                                    onSelect(entry.id)
                                     pickerExpanded = false
                                 }
                                 .padding(horizontal = 16.dp, vertical = 13.dp),
@@ -211,7 +223,7 @@ fun CalculatorScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = item.name,
+                                    text = entry.title,
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     color = OneUITextPrimary
@@ -219,7 +231,12 @@ fun CalculatorScreen(
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = formatMoney(item.unitPrice),
+                                text = when (entry) {
+                                    is PickerEntry.Single -> formatMoney(entry.item.unitPrice)
+                                    is PickerEntry.Paired ->
+                                        formatMoney(entry.sample.unitPrice).removeSuffix(" ج.م") +
+                                            " + " + formatMoney(entry.report.unitPrice)
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = OneUIBlue
                             )
@@ -232,7 +249,7 @@ fun CalculatorScreen(
                                 )
                             }
                         }
-                        if (index < items.lastIndex) {
+                        if (index < entries.lastIndex) {
                             RowDivider()
                         }
                     }
@@ -241,19 +258,33 @@ fun CalculatorScreen(
         }
 
         // Test details
-        if (selected != null) {
+        val detailItem = when (selected) {
+            is PickerEntry.Single -> selected.item
+            is PickerEntry.Paired -> selected.sample
+            null -> null
+        }
+        if (detailItem != null) {
             Spacer(modifier = Modifier.height(14.dp))
             OneUISectionCard(title = "تفاصيل الاختبار") {
-                if (selected.details.isNotBlank()) {
+                if (detailItem.details.isNotBlank()) {
                     Text(
-                        text = selected.details,
+                        text = detailItem.details,
                         style = MaterialTheme.typography.bodyLarge,
                         color = OneUITextPrimary,
                         lineHeight = 24.sp
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
-                if (selected.minNote.isNotBlank() || selected.minQty != null) {
+                if (paired != null && paired.report.details.isNotBlank()) {
+                    if (detailItem.details.isNotBlank()) Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = paired.report.details,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = OneUITextSecondary,
+                        lineHeight = 22.sp
+                    )
+                }
+                if (detailItem.minNote.isNotBlank() || detailItem.minQty != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
@@ -261,7 +292,7 @@ fun CalculatorScreen(
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = "الحد الأدنى: " + (selected.minNote.ifBlank { formatCount(selected.minQty!!) + " " + selected.unit }),
+                            text = "الحد الأدنى: " + (detailItem.minNote.ifBlank { formatCount(detailItem.minQty!!) + " " + detailItem.unit }),
                             style = MaterialTheme.typography.bodyMedium,
                             color = OneUIBlue
                         )
@@ -273,52 +304,46 @@ fun CalculatorScreen(
         // Pricing
         if (selected != null) {
             Spacer(modifier = Modifier.height(14.dp))
-            OneUISectionCard(title = "حساب التسعير") {
-                PriceRow(label = "سعر الوحدة") {
-                    ValueText(formatMoney(unitPrice), modifier = Modifier.testTag("unitPriceValue"))
-                }
-                RowDivider()
-                PriceRow(label = "الكمية") {
-                    Box(
-                        modifier = Modifier
-                            .width(84.dp)
-                            .height(46.dp)
-                            .border(1.5.dp, OneUIOutline, RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        BasicTextField(
-                            value = qtyText,
-                            onValueChange = onQtyChange,
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.titleMedium.copy(
-                                color = OneUITextPrimary,
-                                textAlign = TextAlign.Center
-                            ),
-                            cursorBrush = SolidColor(OneUIBlue),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { focusManager.clearFocus() }
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp)
-                                .testTag("qtyField")
-                        )
+            OneUISectionCard(title = paired?.sectionTitle ?: "حساب التسعير") {
+                if (paired != null) {
+                    PriceRow(label = SamplePairing.priceLabel(paired.sample.unit)) {
+                        ValueText(formatMoney(paired.sample.unitPrice), modifier = Modifier.testTag("unitPriceValue"))
                     }
+                    RowDivider()
+                    PriceRow(label = SamplePairing.priceLabel(paired.report.unit)) {
+                        ValueText(formatMoney(paired.report.unitPrice), modifier = Modifier.testTag("reportPriceValue"))
+                    }
+                    RowDivider()
+                    PriceRow(label = SamplePairing.countLabel(paired.sample.unit)) {
+                        QtyField(value = qtyText, onValueChange = onQtyChange, tag = "qtyField") { focusManager.clearFocus() }
+                    }
+                    val sampleMin = paired.sample.minQty
+                    if (sampleMin != null && qty in 1 until sampleMin) {
+                        MinWarning("الحد الأدنى للكمية: ${formatCount(sampleMin)} ${paired.sample.unit}")
+                    }
+                    RowDivider()
+                    PriceRow(label = SamplePairing.countLabel(paired.report.unit)) {
+                        QtyField(value = qty2Text, onValueChange = onQty2Change, tag = "qty2Field") { focusManager.clearFocus() }
+                    }
+                    val reportMin = paired.report.minQty
+                    if (reportMin != null && qty2 in 1 until reportMin) {
+                        MinWarning("الحد الأدنى للكمية: ${formatCount(reportMin)} ${paired.report.unit}")
+                    }
+                    RowDivider()
+                } else {
+                    PriceRow(label = "سعر الوحدة") {
+                        ValueText(formatMoney(unitPrice), modifier = Modifier.testTag("unitPriceValue"))
+                    }
+                    RowDivider()
+                    PriceRow(label = "الكمية") {
+                        QtyField(value = qtyText, onValueChange = onQtyChange, tag = "qtyField") { focusManager.clearFocus() }
+                    }
+                    val minQty = single?.item?.minQty
+                    if (minQty != null && qty in 1 until minQty) {
+                        MinWarning("الحد الأدنى للكمية: ${formatCount(minQty)} ${single!!.item.unit}")
+                    }
+                    RowDivider()
                 }
-                val minQty = selected.minQty
-                if (minQty != null && qty in 1 until minQty) {
-                    Text(
-                        text = "الحد الأدنى للكمية: ${formatCount(minQty)} ${selected.unit}",
-                        color = OneUIWarning,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                }
-                RowDivider()
                 PriceRow(label = "التكلفة") {
                     ValueText(formatMoney(cost), modifier = Modifier.testTag("costValue"))
                 }
@@ -371,6 +396,52 @@ fun CalculatorScreen(
         Spacer(modifier = Modifier.height(10.dp))
         CreditFooter()
     }
+}
+
+@Composable
+private fun QtyField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    tag: String,
+    onDone: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .width(84.dp)
+            .height(46.dp)
+            .border(1.5.dp, OneUIOutline, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.titleMedium.copy(
+                color = OneUITextPrimary,
+                textAlign = TextAlign.Center
+            ),
+            cursorBrush = SolidColor(OneUIBlue),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { onDone() }),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .testTag(tag)
+        )
+    }
+}
+
+@Composable
+private fun MinWarning(text: String) {
+    Text(
+        text = text,
+        color = OneUIWarning,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.padding(bottom = 6.dp)
+    )
 }
 
 @Composable

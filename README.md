@@ -7,8 +7,9 @@ A simple, polished Android calculator for the unit price list of the Civil Engin
 - **Test picker** — choose any of the 56 priced tests and services from a clean One UI popup menu, with per-item prices.
 - **Test details** — the selected test's full description plus its minimum-quantity requirements shown in a highlighted chip.
 - **Instant pricing** — unit price, quantity input, live cost, automatic 14% VAT row (always applied) and a clear grand total card.
+- **Combined sample + report pricing** — concrete cube, cylinder and grout crushing entries ask for two quantities at once (number of samples and number of reports) and price them together: samples × sample price + reports × report price.
 - **Minimum-quantity guard** — a warning appears when the entered quantity is below the test's minimum.
-- **Dynamic price database** — prices live in a versioned CSV file (`#version=2026`). Import a new CSV any time from inside the app, export the current database, or edit, add and delete individual items. Multi-price tests (e.g. concrete cylinder crushing: per cylinder / leveling / report) are separate selectable entries.
+- **Dynamic price database** — prices live in a versioned CSV file (`#version=2026`). Import a new CSV any time from inside the app, export the current database, or edit, add and delete individual items. Multi-part tests are grouped where it matters: cube / cylinder / grout crushing combine their sample price and report price into one entry with two quantity inputs, while auxiliary services (e.g. cylinder leveling) stay separate entries.
 - **Database version label** — the active price-list version is always visible on the main screen and the database screen.
 
 ## Screenshots

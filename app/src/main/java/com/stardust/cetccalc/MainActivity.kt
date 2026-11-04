@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.stardust.cetccalc.data.SamplePairing
 import com.stardust.cetccalc.ui.MainViewModel
 import com.stardust.cetccalc.ui.screens.AboutScreen
 import com.stardust.cetccalc.ui.screens.CalculatorScreen
@@ -45,6 +46,7 @@ fun AppNav() {
     val dbVersion by vm.dbVersion.collectAsState()
     val selectedId by vm.selectedId.collectAsState()
     val qtyText by vm.qtyText.collectAsState()
+    val qty2Text by vm.qty2Text.collectAsState()
     val statusMessage by vm.statusMessage.collectAsState()
 
     NavHost(
@@ -56,13 +58,16 @@ fun AppNav() {
         popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) }
     ) {
         composable("calculator") {
+            val entries = SamplePairing.buildPickerEntries(items)
             CalculatorScreen(
-                items = items,
+                entries = entries,
                 dbVersion = dbVersion,
-                selected = items.firstOrNull { it.id == selectedId },
+                selected = entries.firstOrNull { it.id == selectedId },
                 qtyText = qtyText,
+                qty2Text = qty2Text,
                 onSelect = vm::select,
                 onQtyChange = vm::setQty,
+                onQty2Change = vm::setQty2,
                 onOpenDatabase = { navController.navigate("database") },
                 onOpenAbout = { navController.navigate("about") }
             )
