@@ -239,6 +239,7 @@ class CalculatorFlowTest {
     }
 
     private fun selectPaired(title: String) {
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("testPicker"))
         waitForPicker()
         composeRule.onNodeWithTag("testPicker").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
