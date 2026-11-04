@@ -2,17 +2,19 @@ package com.stardust.cetccalc
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.hasText
+
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.performScrollToNode
+
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -163,6 +165,7 @@ class CalculatorFlowTest {
             runCatching { composeRule.onNodeWithTag("pickerSearchField").assertIsDisplayed(); true }.getOrDefault(false)
         }
         // Full list first (empty query), then instant Arabic-normalized filtering
+        composeRule.onNodeWithTag("pickerPopup").performScrollToNode(hasText("بروكتور رمل"))
         composeRule.onNodeWithText("بروكتور رمل").assertIsDisplayed()
         composeRule.onNodeWithTag("pickerSearchField").performTextReplacement("اسطوانات")
         composeRule.waitForIdle()
