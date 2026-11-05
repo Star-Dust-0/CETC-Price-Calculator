@@ -113,6 +113,8 @@ class CalculatorFlowTest {
         // VAT is always on: no switch exists, total always includes the 14%
         composeRule.onAllNodesWithTag("taxSwitch").assertCountEquals(0)
 
+        // Scroll the picker into the clipped content viewport before tapping it.
+        composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("testPicker"))
         // Below-minimum warning: مطرقة ارتداد min ٣٠ قراءة, qty 5
         composeRule.onNodeWithTag("testPicker").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {

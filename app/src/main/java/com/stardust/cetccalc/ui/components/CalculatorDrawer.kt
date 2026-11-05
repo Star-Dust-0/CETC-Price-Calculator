@@ -43,7 +43,7 @@ fun CalculatorDrawer(
                         .frosted().verticalScroll(rememberScrollState()).padding(16.dp).testTag("navigationDrawer")
                 ) {
                     Text("CETC", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 24.dp))
-                    Text("حاسبة الأسعار", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 12.dp))
+                    Text("حاسبة الأسعار", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 12.dp))
                     Text("اختصارات سريعة", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 28.dp, bottom = 12.dp))
                     DrawerItem("حاسبة سعر المكعبات الخرسانية", Icons.Outlined.ViewInAr, selectedId == cubeId && cubeId != null, cubeId != null, "cubeShortcut") { cubeId?.let(onSelect) }
                     DrawerItem("حاسبة سعر الجراوت", Icons.Outlined.Science, selectedId == groutId && groutId != null, groutId != null, "groutShortcut") { groutId?.let(onSelect) }
