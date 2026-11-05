@@ -20,7 +20,7 @@ A simple, polished Android calculator for the unit price list of the Civil Engin
 
 ## Screenshots
 
-Screenshots show the previously published interface.
+
 
 | Home | Test picker | Calculation (with VAT) |
 | --- | --- | --- |
@@ -29,6 +29,10 @@ Screenshots show the previously published interface.
 | Minimum-quantity warning | Database manager | About |
 | --- | --- | --- |
 | ![Minimum quantity warning](docs/screenshots/05-min-quantity-warning.png) | ![Database manager](docs/screenshots/06-database-manager.png) | ![About](docs/screenshots/07-about.png) |
+
+| Quick menu | Dark quick menu | Dark calculation |
+| --- | --- | --- |
+| ![Quick menu](docs/screenshots/08-drawer-light.png) | ![Dark quick menu](docs/screenshots/09-drawer-dark.png) | ![Dark calculation](docs/screenshots/10-calculation-dark.png) |
 
 ## Changelog
 
