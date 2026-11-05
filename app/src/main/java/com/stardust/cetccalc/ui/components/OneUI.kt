@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,7 +43,7 @@ fun OneUISectionCard(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(containerColor = OneUISurface),
+        colors = CardDefaults.cardColors(containerColor = OneUISurface.copy(alpha = 0.88f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
@@ -54,12 +53,7 @@ fun OneUISectionCard(
                     color = OneUIBlue,
                     style = MaterialTheme.typography.titleMedium
                 )
-                Spacer(modifier = Modifier.width(10.dp))
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(OneUIBlue, CircleShape)
-                )
+
             }
             Spacer(modifier = Modifier.height(10.dp))
             content()
@@ -111,21 +105,5 @@ fun ValueText(text: String, modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-    )
-}
-
-/** The shared "brought to you by Instinct" credit line. */
-@Composable
-fun CreditFooter(modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
-    Text(
-        text = "Brought to you by Instinct",
-        color = OneUITextSecondary,
-        style = MaterialTheme.typography.bodySmall,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { uriHandler.openUri("https://instinct.com") }
-            .padding(vertical = 12.dp)
     )
 }

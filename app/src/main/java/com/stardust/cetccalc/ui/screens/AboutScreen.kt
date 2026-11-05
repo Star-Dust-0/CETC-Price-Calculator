@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.stardust.cetccalc.ui.components.CreditFooter
 import com.stardust.cetccalc.ui.theme.OneUIBackground
 import com.stardust.cetccalc.ui.theme.OneUIBlue
 import com.stardust.cetccalc.ui.theme.OneUISurface
@@ -77,7 +76,7 @@ fun AboutScreen(onBack: () -> Unit) {
             Column(modifier = Modifier.padding(18.dp)) {
                 Text("حاسبة أسعار الاختبارات", style = MaterialTheme.typography.titleLarge, color = OneUITextPrimary)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("الإصدار 1.0.0", style = MaterialTheme.typography.bodyMedium, color = OneUITextSecondary)
+                Text("الإصدار ${com.stardust.cetccalc.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyMedium, color = OneUITextSecondary)
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     "حاسبة أسعار اختبارات وحدة اختبارات واستشارات الهندسة المدنية، مع قاعدة بيانات أسعار قابلة للتحديث من ملفات CSV.",
@@ -134,7 +133,6 @@ fun AboutScreen(onBack: () -> Unit) {
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        CreditFooter()
         Spacer(modifier = Modifier.height(8.dp))
     }
 }

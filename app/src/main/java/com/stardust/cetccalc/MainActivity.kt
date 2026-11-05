@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.stardust.cetccalc.data.SamplePairing
 import com.stardust.cetccalc.ui.MainViewModel
+import com.stardust.cetccalc.ui.screens.SettingsScreen
 import com.stardust.cetccalc.ui.screens.AboutScreen
 import com.stardust.cetccalc.ui.screens.CalculatorScreen
 import com.stardust.cetccalc.ui.screens.DatabaseScreen
@@ -74,7 +75,14 @@ fun AppNav() {
                 onQty2Inc = vm::incrementQty2,
                 onQty2Dec = vm::decrementQty2,
                 onOpenDatabase = { navController.navigate("database") },
-                onOpenAbout = { navController.navigate("about") }
+                onOpenSettings = { navController.navigate("settings") { launchSingleTop = true } }
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onDatabase = { navController.navigate("database") },
+                onAbout = { navController.navigate("about") }
             )
         }
         composable("database") {

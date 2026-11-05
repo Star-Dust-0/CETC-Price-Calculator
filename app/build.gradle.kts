@@ -55,6 +55,7 @@ android {
 }
 
 dependencies {
+  implementation("dev.chrisbanes.haze:haze:1.6.0")
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.compose.material.icons.core)

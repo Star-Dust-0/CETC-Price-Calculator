@@ -1,8 +1,13 @@
 # CETC Price Calculator
 
-A simple, polished Android calculator for the unit price list of the Civil Engineering Tests and Consultations Unit (E-JUST), in Arabic (RTL), redesigned in the Morphe Manager design language (Material 3 expressive) with light and dark themes.
+A simple, polished Android calculator for the unit price list of the Civil Engineering Tests and Consultations Unit (E-JUST), in Arabic (RTL), with a Wathkkir-style One UI interface, floating frosted controls, and solid neutral light and dark backgrounds.
 
 ## Features
+
+- **Floating controls** — glass menu and settings buttons stay accessible while scrolling.
+- **Quick navigation** — a frosted right-side drawer opens the concrete cube and grout calculators directly, alongside all tests and the price database.
+- **Clear input outlines** — contrasting borders identify the searchable test picker and writable quantities, without dot markers.
+- **Settings** — database tools and app information are grouped in a dedicated screen, with a back button on subpages.
 
 - **Search-first picker** — a full-screen instant search replaces the long scroll list: type any part of a test name and matching entries appear immediately. Search is Arabic-aware: alef/yaa/taa-marbuta variants, diacritics and common suffix differences (خرسانة/خرسانية) all match, and multi-word queries match in any order.
 - **Typed or stepped quantities** — every quantity is a tappable numeric field (Arabic-Indic or Latin digits) with optional +/− steppers.
@@ -15,7 +20,7 @@ A simple, polished Android calculator for the unit price list of the Civil Engin
 
 ## Screenshots
 
-Captured automatically from real emulator runs in CI (API 34, Nexus 6 profile) on every push.
+Screenshots show the previously published interface.
 
 | Home | Test picker | Calculation (with VAT) |
 | --- | --- | --- |
@@ -27,6 +32,14 @@ Captured automatically from real emulator runs in CI (API 34, Nexus 6 profile) o
 
 ## Changelog
 
+### Next update
+
+- Wathkkir-style floating glass menu and settings controls.
+- Right-side drawer with concrete cube and grout calculator shortcuts.
+- Solid neutral backgrounds in light and dark modes, with contrasting input outlines.
+- Dedicated settings screen and version information that follows the installed app.
+- Removed the third-party promotional credit.
+
 ### v1.1.0 (2026-11-04)
 
 - Full redesign in the Morphe Manager design language: Material 3 expressive color tokens, large rounded cards, springy navigation, light + dark + system themes.
@@ -35,7 +48,6 @@ Captured automatically from real emulator runs in CI (API 34, Nexus 6 profile) o
 - Quantities can be typed directly (Arabic-Indic or Latin digits) or adjusted with +/− steppers.
 - Cost before VAT, 14% VAT and total now shown as three equally prominent cards.
 - New app icon.
-- Note: tested on emulator (API 34); not yet tested on a physical device.
 
 ### v1.0.0
 
@@ -48,5 +60,3 @@ The bundled database (`app/src/main/assets/prices_2026.csv`, version `2026`) mir
 ---
 
 Developer: محمد النجار
-
-[brought to you by Instinct](https://instinct.com)

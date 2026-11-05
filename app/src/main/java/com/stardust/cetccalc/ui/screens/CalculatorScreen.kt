@@ -25,6 +25,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.TextButton
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
@@ -66,12 +68,20 @@ import androidx.compose.ui.unit.sp
 import com.stardust.cetccalc.data.PickerEntry
 import com.stardust.cetccalc.data.SamplePairing
 import com.stardust.cetccalc.util.ArabicSearch
-import com.stardust.cetccalc.ui.components.CreditFooter
+import com.stardust.cetccalc.ui.components.FloatingTool
+import com.stardust.cetccalc.ui.components.CalculatorDrawer
+import com.stardust.cetccalc.ui.components.LocalGlassState
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Settings
 import com.stardust.cetccalc.ui.components.OneUISectionCard
 import com.stardust.cetccalc.ui.components.PriceRow
 import com.stardust.cetccalc.ui.components.RowDivider
 import com.stardust.cetccalc.ui.components.ValueText
 import com.stardust.cetccalc.ui.theme.OneUIBackground
+import com.stardust.cetccalc.ui.theme.OneUIBlueDark
 import com.stardust.cetccalc.ui.theme.OneUIBlue
 import com.stardust.cetccalc.ui.theme.OneUIChipBlue
 import com.stardust.cetccalc.ui.theme.OneUIMenuBg
@@ -101,10 +111,16 @@ fun CalculatorScreen(
     onQty2Inc: () -> Unit,
     onQty2Dec: () -> Unit,
     onOpenDatabase: () -> Unit,
-    onOpenAbout: () -> Unit
+    onOpenSettings: () -> Unit
 ) {
     var searchOpen by remember { mutableStateOf(false) }
-    var menuExpanded by remember { mutableStateOf(false) }
+    var detailsExpanded by remember(selected?.id) { mutableStateOf(false) }
+    var drawerOpen by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val hazeState = remember { HazeState() }
+    val cubeEntry = entries.filterIsInstance<PickerEntry.Paired>().firstOrNull { it.sectionTitle == "مكعبات خرسانية" }
+    val groutEntry = entries.filterIsInstance<PickerEntry.Paired>().firstOrNull { it.sectionTitle == "عينات جراوت" }
+    LaunchedEffect(selected?.id) { scrollState.scrollTo(0) }
 
     val qty = parseLocalizedInt(qtyText) ?: 0
     val qty2 = parseLocalizedInt(qty2Text) ?: 0
@@ -122,67 +138,26 @@ fun CalculatorScreen(
     val total = cost + tax
     val focusManager = LocalFocusManager.current
 
+    CompositionLocalProvider(LocalGlassState provides hazeState) {
+    Box(Modifier.fillMaxSize().background(OneUIBackground).statusBarsPadding().navigationBarsPadding().imePadding()) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(OneUIBackground)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .testTag("calcScroll")
+        modifier = Modifier.fillMaxSize().hazeSource(hazeState)
+            .verticalScroll(scrollState).testTag("calcScroll")
     ) {
-        // Header
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 56.dp, vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "حاسبة أسعار الاختبارات",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = OneUITextPrimary,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "وحدة اختبارات واستشارات الهندسة المدنية · إصدار الأسعار: $dbVersion",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OneUITextSecondary,
-                    textAlign = TextAlign.Center
-                )
-            }
-            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                IconButton(
-                    onClick = { menuExpanded = true },
-                    modifier = Modifier.testTag("menuButton")
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "القائمة",
-                        tint = OneUITextPrimary
-                    )
-                }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
-                    modifier = Modifier.background(OneUIMenuBg, RoundedCornerShape(16.dp))
-                ) {
-                    OverflowMenuItem("إدارة قاعدة البيانات") {
-                        menuExpanded = false
-                        onOpenDatabase()
-                    }
-                    OverflowMenuItem("حول التطبيق") {
-                        menuExpanded = false
-                        onOpenAbout()
-                    }
-                }
-            }
+        Spacer(Modifier.height(80.dp))
+        Column(Modifier.fillMaxWidth().padding(horizontal = 23.dp, vertical = 18.dp)) {
+            Text("حاسبة الأسعار", style = MaterialTheme.typography.labelLarge, color = OneUITextSecondary)
+            Text(
+                when (selected?.id) {
+                    cubeEntry?.id -> if (selected != null) "المكعبات الخرسانية" else "حاسبة أسعار الاختبارات"
+                    groutEntry?.id -> "سعر الجراوت"
+                    else -> "حاسبة أسعار الاختبارات"
+                },
+                style = MaterialTheme.typography.headlineMedium, color = OneUITextPrimary
+            )
+            Text("وحدة اختبارات واستشارات الهندسة المدنية · إصدار الأسعار: $dbVersion",
+                style = MaterialTheme.typography.bodySmall, color = OneUITextSecondary)
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         // Test type picker: search-first (Mohamed 2026-11-04: "scrolling the list
         // every time is illogical" - the search field is the primary way to pick)
@@ -193,6 +168,7 @@ fun CalculatorScreen(
                     .testTag("testPicker")
                     .clip(RoundedCornerShape(28.dp))
                     .background(OneUISurfaceContainer)
+                    .border(1.5.dp, OneUIBlue, RoundedCornerShape(28.dp))
                     .clickable { searchOpen = true }
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -238,7 +214,7 @@ fun CalculatorScreen(
             is PickerEntry.Paired -> selected.sample
             null -> null
         }
-        if (detailItem != null) {
+        if (detailItem != null && paired == null) {
             Spacer(modifier = Modifier.height(14.dp))
             OneUISectionCard(title = "تفاصيل الاختبار") {
                 if (detailItem.details.isNotBlank()) {
@@ -304,7 +280,16 @@ fun CalculatorScreen(
                     if (reportMin != null && qty2 in 1 until reportMin) {
                         MinWarning("الحد الأدنى للكمية: ${formatCount(reportMin)} ${paired.report.unit}")
                     }
-                    RowDivider()
+                    TextButton(onClick = { detailsExpanded = !detailsExpanded }) {
+                        Text(if (detailsExpanded) "إخفاء التفاصيل" else "تفاصيل الاختبار والحد الأدنى")
+                    }
+                    AnimatedVisibility(detailsExpanded) {
+                        Column {
+                            Text(paired.sample.details, color = OneUITextSecondary, style = MaterialTheme.typography.bodySmall)
+                            Text(paired.report.details, color = OneUITextSecondary, style = MaterialTheme.typography.bodySmall)
+                            Text("الحد الأدنى: " + paired.sample.minNote.ifBlank { formatCount(paired.sample.minQty ?: 1) + " " + paired.sample.unit }, color = OneUIBlue, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 } else {
                     PriceRow(label = "سعر الوحدة") {
                         ValueText(formatMoney(unitPrice), modifier = Modifier.testTag("unitPriceValue"))
@@ -353,7 +338,7 @@ fun CalculatorScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(26.dp),
-                colors = CardDefaults.cardColors(containerColor = OneUIBlue)
+                colors = CardDefaults.cardColors(containerColor = OneUIBlueDark)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 22.dp, vertical = 20.dp),
@@ -383,7 +368,24 @@ fun CalculatorScreen(
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-        CreditFooter()
+        Spacer(Modifier.height(24.dp))
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 19.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        FloatingTool(Icons.Outlined.Menu, "القائمة", "menuButton") { drawerOpen = true }
+        Spacer(Modifier.weight(1f))
+        Text("CETC", style = MaterialTheme.typography.labelLarge, color = OneUITextSecondary)
+        Spacer(Modifier.weight(1f))
+        FloatingTool(Icons.Outlined.Settings, "الإعدادات", "settingsButton", onOpenSettings)
+    }
+    CalculatorDrawer(
+        open = drawerOpen, selectedId = selected?.id, cubeId = cubeEntry?.id, groutId = groutEntry?.id, dbVersion = dbVersion,
+        onDismiss = { drawerOpen = false },
+        onSelect = { id -> onSelect(id); drawerOpen = false },
+        onSearch = { drawerOpen = false; searchOpen = true },
+        onDatabase = { drawerOpen = false; onOpenDatabase() },
+        onSettings = { drawerOpen = false; onOpenSettings() }
+    )
+    }
     }
 }
 
@@ -399,7 +401,7 @@ private fun QtyStepper(
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
-                .size(34.dp)
+                .size(44.dp)
                 .clip(CircleShape)
                 .border(1.5.dp, OneUIOutline, CircleShape)
                 .clickable(onClick = onDecrement)
@@ -411,7 +413,7 @@ private fun QtyStepper(
         Spacer(modifier = Modifier.width(8.dp))
         Box(
             modifier = Modifier
-                .size(34.dp)
+                .size(44.dp)
                 .clip(CircleShape)
                 .background(OneUIBlue)
                 .clickable(onClick = onIncrement)
@@ -460,9 +462,9 @@ private fun QtyField(
 ) {
     Box(
         modifier = Modifier
-            .width(84.dp)
+            .width(64.dp)
             .height(46.dp)
-            .border(1.5.dp, OneUIOutline, RoundedCornerShape(12.dp)),
+            .border(1.5.dp, OneUIBlue, RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
         BasicTextField(
@@ -553,6 +555,7 @@ private fun SearchPickerDialog(
                             .padding(end = 16.dp)
                             .clip(RoundedCornerShape(28.dp))
                             .background(OneUISurfaceContainer)
+                            .border(1.5.dp, OneUIBlue, RoundedCornerShape(28.dp))
                             .padding(horizontal = 20.dp, vertical = 14.dp)
                     ) {
                         BasicTextField(

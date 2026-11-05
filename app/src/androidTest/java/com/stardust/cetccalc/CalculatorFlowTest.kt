@@ -238,6 +238,30 @@ class CalculatorFlowTest {
         screenshot("paired_grout")
     }
 
+    @Test
+    fun drawerShortcutsAndSettings() {
+        waitForPicker()
+        composeRule.onNodeWithTag("menuButton").performClick()
+        composeRule.onNodeWithTag("navigationDrawer").assertIsDisplayed()
+        screenshot("drawer_light")
+        composeRule.onNodeWithTag("cubeShortcut").performClick()
+        composeRule.onNodeWithTag("unitPriceValue").assertTextEquals("٤٠ ج.م")
+        composeRule.onNodeWithTag("qtyField").performTextReplacement("3")
+        composeRule.onNodeWithTag("qty2Field").performTextReplacement("2")
+        composeRule.onNodeWithTag("qty2Field").performImeAction()
+        composeRule.onNodeWithTag("totalValue").assertTextEquals("٣١٩٫٢ ج.م")
+        composeRule.onNodeWithTag("menuButton").performClick()
+        composeRule.onNodeWithTag("groutShortcut").performClick()
+        composeRule.onNodeWithTag("unitPriceValue").assertTextEquals("٥٠ ج.م")
+        composeRule.onNodeWithTag("reportPriceValue").assertTextEquals("١٥٠ ج.م")
+        composeRule.onNodeWithTag("settingsButton").performClick()
+        composeRule.onNodeWithText("الإعدادات").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("settingsButton").assertCountEquals(0)
+        composeRule.onNodeWithTag("backButton").performClick()
+        composeRule.onNodeWithTag("testPicker").assertIsDisplayed()
+        composeRule.onNodeWithText("Brought to you by Instinct").assertDoesNotExist()
+    }
+
     private fun selectPaired(title: String) {
         composeRule.onNodeWithTag("calcScroll").performScrollToNode(hasTestTag("testPicker"))
         waitForPicker()
@@ -266,11 +290,11 @@ class CalculatorFlowTest {
         composeRule.onNodeWithTag("backButton").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("menuButton").performClick()
+        composeRule.onNodeWithTag("settingsButton").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("حول التطبيق").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Brought to you by Instinct").assertIsDisplayed()
+        composeRule.onNodeWithText("Brought to you by Instinct").assertDoesNotExist()
         screenshot("about_screen")
     }
 }
