@@ -137,6 +137,11 @@ class CalculatorFlowTest {
             composeRule.waitForIdle()
             Thread.sleep(1200) // let the recreated activity settle
             screenshot("home_dark")
+            composeRule.onNodeWithTag("menuButton").performClick()
+            composeRule.waitForIdle()
+            screenshot("drawer_dark")
+            composeRule.onNodeWithTag("drawerScrim").performClick()
+            composeRule.waitForIdle()
 
             composeRule.onNodeWithTag("testPicker").performClick()
             composeRule.waitUntil(timeoutMillis = 5_000) {

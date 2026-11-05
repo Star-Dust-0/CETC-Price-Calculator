@@ -141,10 +141,10 @@ fun CalculatorScreen(
     CompositionLocalProvider(LocalGlassState provides hazeState) {
     Box(Modifier.fillMaxSize().background(OneUIBackground).statusBarsPadding().navigationBarsPadding().imePadding()) {
     Column(
-        modifier = Modifier.fillMaxSize().hazeSource(hazeState)
+        modifier = Modifier.fillMaxSize().padding(top = 64.dp).hazeSource(hazeState)
             .verticalScroll(scrollState).testTag("calcScroll")
     ) {
-        Spacer(Modifier.height(80.dp))
+        Spacer(Modifier.height(16.dp))
         Column(Modifier.fillMaxWidth().padding(horizontal = 23.dp, vertical = 18.dp)) {
             Text("حاسبة الأسعار", style = MaterialTheme.typography.labelLarge, color = OneUITextSecondary)
             Text(
@@ -419,7 +419,7 @@ private fun QtyStepper(
                 .clickable(onClick = onIncrement)
                 .testTag(tag + "Plus"),
             contentAlignment = Alignment.Center
-        ) { Text("+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+        ) { Text("+", color = MaterialTheme.colorScheme.onPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
     }
 }
 
