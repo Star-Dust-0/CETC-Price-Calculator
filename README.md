@@ -32,7 +32,7 @@ Screenshots show the previously published interface.
 
 ## Changelog
 
-### Next update
+### v1.2.0
 
 - Wathkkir-style floating glass menu and settings controls.
 - Right-side drawer with concrete cube and grout calculator shortcuts.
